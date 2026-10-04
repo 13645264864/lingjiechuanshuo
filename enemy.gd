@@ -5,6 +5,7 @@ extends CharacterBody2D
 var attack_timer:float = 0.0
 var player:CharacterBody2D
 @export var hp:float = 30.0
+var max_hp:float = 30.0
 var is_dead:bool = false
 @export var damage_scene:PackedScene
 @export var aura_drop_scene:PackedScene
@@ -13,7 +14,21 @@ var tween:Tween
 func _ready():
 	# 从主场景找Player
 	player = get_parent().get_node_or_null("Player")
-	global_position = get_random_screen_edge_pos()
+	# 出生点和成长属性由 GameManager 在加入场景后设置。
+
+func setup_spawn(spawn_position:Vector2, target:CharacterBody2D, game_minutes:float):
+	global_position = spawn_position
+	player = target
+	apply_time_scaling(game_minutes)
+
+func apply_time_scaling(game_minutes:float):
+	var hp_scale = pow(1.18, game_minutes)
+	var damage_scale = pow(1.12, game_minutes)
+	var speed_scale = 1.0 + min(game_minutes * 0.035, 0.45)
+	max_hp = 30.0 * hp_scale
+	hp = max_hp
+	damage = 10.0 * damage_scale
+	move_speed = 80.0 * speed_scale
 
 func get_random_screen_edge_pos() -> Vector2:
 	var cam = get_viewport().get_camera_2d()

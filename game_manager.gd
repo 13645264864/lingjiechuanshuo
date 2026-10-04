@@ -3,6 +3,7 @@ extends Node2D
 @export var max_enemy:int = 30
 @export var spawn_interval:float = 4.0
 @export var enemy_template:PackedScene
+@export var boss_template:PackedScene
 var game_time:float = 0.0
 var game_over:bool = false
 var spawn_timer:Timer
@@ -40,6 +41,10 @@ var buff_panel:ColorRect
 var buff_buttons:Array[Button] = []
 # 全局临时候选列表，不再放按钮元数据
 var temp_candidates:Array = []
+var boss_count:int = 0
+var boss_bar:ProgressBar
+var boss_name_label:Label
+var dodge_button:Button
 
 func get_total_buff_stats() -> Dictionary:
 	var stat = {
@@ -198,6 +203,50 @@ func _ready():
 	buff_panel.anchor_bottom =1
 	buff_panel.visible = false
 	canvas.add_child(buff_panel)
+	create_boss_ui()
+	create_mobile_dodge_button()
+
+func create_boss_ui():
+	boss_name_label = Label.new()
+	boss_name_label.text = "紫霄蚀界尊"
+	boss_name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	boss_name_label.anchor_left = 0.2
+	boss_name_label.anchor_right = 0.8
+	boss_name_label.offset_top = 58
+	boss_name_label.offset_bottom = 92
+	boss_name_label.add_theme_font_size_override("font_size", 28)
+	boss_name_label.modulate = Color(1.0, 0.35, 0.8)
+	boss_name_label.visible = false
+	canvas.add_child(boss_name_label)
+	boss_bar = ProgressBar.new()
+	boss_bar.anchor_left = 0.15
+	boss_bar.anchor_right = 0.85
+	boss_bar.offset_top = 92
+	boss_bar.offset_bottom = 122
+	boss_bar.show_percentage = false
+	boss_bar.visible = false
+	canvas.add_child(boss_bar)
+
+func create_mobile_dodge_button():
+	dodge_button = Button.new()
+	dodge_button.text = "闪避\nSHIFT"
+	dodge_button.custom_minimum_size = Vector2(130, 90)
+	dodge_button.anchor_left = 1.0
+	dodge_button.anchor_top = 1.0
+	dodge_button.anchor_right = 1.0
+	dodge_button.anchor_bottom = 1.0
+	dodge_button.offset_left = -170
+	dodge_button.offset_top = -130
+	dodge_button.offset_right = -30
+	dodge_button.offset_bottom = -30
+	dodge_button.add_theme_font_size_override("font_size", 22)
+	dodge_button.pressed.connect(_on_dodge_pressed)
+	canvas.add_child(dodge_button)
+
+func _on_dodge_pressed():
+	var player = get_parent().get_node_or_null("Player")
+	if player != null and player.has_method("dodge"):
+		player.dodge()
 
 func rebuild_buff_buttons():
 	for old_btn in buff_buttons:
@@ -350,6 +399,10 @@ func _process(delta):
 	if not game_started or game_over:
 		return
 	game_time += delta
+	var minute_level := int(floor(game_time / 60.0))
+	if minute_level > boss_count:
+		boss_count = minute_level
+		spawn_boss(boss_count)
 	var total_sec:int = floor(game_time)
 	var minute:int = total_sec / 60
 	var second:int = total_sec % 60
@@ -372,6 +425,48 @@ func _spawn_batch():
 		var new_enemy = enemy_template.instantiate()
 		new_enemy.add_to_group("enemy")
 		get_parent().add_child(new_enemy)
+		new_enemy.setup_spawn(get_safe_spawn_position(), get_parent().get_node("Player"), game_time / 60.0)
+
+func get_safe_spawn_position() -> Vector2:
+	var player = get_parent().get_node("Player")
+	var camera = get_viewport().get_camera_2d()
+	var camera_scale = maxf(abs(camera.global_scale.x), 0.01)
+	var half_size = get_viewport_rect().size * 0.5 / camera_scale
+	var margin := 180.0
+	var side = rng.randi_range(0, 3)
+	var pos = player.global_position
+	match side:
+		0: pos += Vector2(rng.randf_range(-half_size.x, half_size.x), -half_size.y - margin)
+		1: pos += Vector2(half_size.x + margin, rng.randf_range(-half_size.y, half_size.y))
+		2: pos += Vector2(rng.randf_range(-half_size.x, half_size.x), half_size.y + margin)
+		3: pos += Vector2(-half_size.x - margin, rng.randf_range(-half_size.y, half_size.y))
+	return pos
+
+func spawn_boss(level:int):
+	if boss_template == null:
+		return
+	for boss in get_tree().get_nodes_in_group("boss"):
+		if not boss.is_dead:
+			return
+	var boss = boss_template.instantiate()
+	get_parent().add_child(boss)
+	boss.setup_spawn(get_safe_spawn_position(), get_parent().get_node("Player"), level)
+	boss_bar.max_value = boss.max_hp
+	boss_bar.value = boss.hp
+	boss_bar.visible = true
+	boss_name_label.text = "紫霄蚀界尊 · 第 " + str(level) + " 劫"
+	boss_name_label.visible = true
+
+func boss_defeated():
+	if boss_bar != null:
+		boss_bar.visible = false
+	if boss_name_label != null:
+		boss_name_label.visible = false
+
+func _physics_process(_delta):
+	for boss in get_tree().get_nodes_in_group("boss"):
+		if is_instance_valid(boss) and boss_bar != null:
+			boss_bar.value = boss.hp
 
 func game_die():
 	game_over = true

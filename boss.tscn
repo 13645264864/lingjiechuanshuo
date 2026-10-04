@@ -1,0 +1,24 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://boss.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://Sprites/boss_violet_abyss.png" id="2_texture"]
+[ext_resource type="PackedScene" path="res://aura_drop.tscn" id="3_aura"]
+
+[sub_resource type="CircleShape2D" id="BossShape"]
+radius = 13.0
+
+[sub_resource type="SpriteFrames" id="BossFrames"]
+animations = [{"frames": [{"duration": 1.0, "texture": ExtResource("2_texture")}], "loop": true, "name": &"run_right", "speed": 4.0}, {"frames": [{"duration": 1.0, "texture": ExtResource("2_texture")}], "loop": true, "name": &"run_left", "speed": 4.0}]
+
+[node name="Boss" type="CharacterBody2D" groups=["enemy", "boss"]]
+collision_layer = 3
+collision_mask = 3
+script = ExtResource("1_script")
+aura_drop_scene = ExtResource("3_aura")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("BossShape")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="."]
+sprite_frames = SubResource("BossFrames")
+animation = &"run_right"

@@ -59,6 +59,7 @@
 [ext_resource type="Texture2D" uid="uid://dt45q30vgn5eh" path="res://Sprites/8426.jpg_wh300.jpg" id="54_6iyjs"]
 [ext_resource type="Script" uid="uid://drhkliks48y7h" path="res://status_bar.gd" id="56_e71vb"]
 [ext_resource type="PackedScene" uid="uid://ckyysi3einpdw" path="res://enemy.tscn" id="59_ruth0"]
+[ext_resource type="PackedScene" path="res://boss.tscn" id="60_boss"]
 [ext_resource type="Script" uid="uid://f0cyxh4sgytd" path="res://game_manager.gd" id="63_sm6fg"]
 
 [sub_resource type="CapsuleShape2D" id="CapsuleShape2D_8vbgw"]
@@ -339,3 +340,4 @@ layout_mode = 2
 [node name="GameManager" type="Node2D" parent="." unique_id=1326122625]
 script = ExtResource("63_sm6fg")
 enemy_template = ExtResource("59_ruth0")
+boss_template = ExtResource("60_boss")

@@ -26,6 +26,13 @@ var need_aura:float = BASE_AURA    # 升到下一级所需灵气
 
 # 拿到GameManager引用
 var gm:Node2D = null
+var dodge_cooldown:float = 1.2
+var dodge_timer:float = 0.0
+var dodge_duration:float = 0.22
+var dodge_time_left:float = 0.0
+var dodge_speed:float = 620.0
+var is_invincible:bool = false
+var dodge_direction:Vector2 = Vector2.DOWN
 
 func _ready():
 	gm = get_node_or_null("/root/Node2D/GameManager")
@@ -46,6 +53,14 @@ func _ready():
 
 func _physics_process(delta):
 	if is_dead:
+		return
+	dodge_timer = maxf(dodge_timer - delta, 0.0)
+	if Input.is_action_just_pressed("dodge"):
+		dodge()
+	if dodge_time_left > 0.0:
+		dodge_time_left -= delta
+		velocity = dodge_direction * dodge_speed
+		move_and_slide()
 		return
 	fireball_timer -= delta
 	if fireball_timer <= 0:
@@ -110,7 +125,7 @@ func shoot_fireball():
 	print("发射火球")
 
 func take_damage(amount:float):
-	if is_dead:
+	if is_dead or is_invincible:
 		return
 	hp -= amount
 	print("怪物攻击玩家，扣血：", amount,"剩余玩家血量：", hp)
@@ -132,6 +147,22 @@ func take_damage(amount:float):
 	
 	if hp <= 0:
 		die()
+
+func dodge():
+	if is_dead or dodge_timer > 0.0 or dodge_time_left > 0.0:
+		return
+	dodge_timer = dodge_cooldown
+	dodge_time_left = dodge_duration
+	is_invincible = true
+	dodge_direction = input_dir.normalized()
+	if dodge_direction == Vector2.ZERO:
+		dodge_direction = last_dir.normalized()
+	var invuln_tween = create_tween()
+	invuln_tween.tween_interval(dodge_duration)
+	invuln_tween.tween_callback(func(): is_invincible = false)
+	var flash_tween = create_tween().set_loops(3)
+	flash_tween.tween_property(anim, "modulate:a", 0.25, 0.06)
+	flash_tween.tween_property(anim, "modulate:a", 1.0, 0.06)
 
 func die():
 	is_dead = true
