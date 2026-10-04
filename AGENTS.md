@@ -58,3 +58,19 @@ git push -u origin main
 - 修改场景、脚本或资源后，使用项目指定的 Godot 4.7.2 运行主场景验证。
 - 优先使用无界面启动检查资源加载和脚本初始化，再进行需要交互的手动测试。
 - 不要把“终端找不到 Godot 命令”误判为项目不能运行；应先使用上面记录的完整可执行文件路径。
+
+## 火球技能回归测试
+
+- 火球在加入场景树之前初始化，玩家必须把 `GameManager.get_fireball_config()` 的配置显式传入 `setup()`；不要在入树前通过绝对路径寻找 GameManager。
+- 分裂出的次级火球继承主火球配置，但不会递归分裂；火球加入主场景，随重开一起清理。
+- 巨型火球通过根节点缩放，同时扩大图像和碰撞范围。
+- 使用 console 可执行文件等待进程完成、检查退出码和完整日志。仅收到引擎启动横幅或没有报错输出不能证明测试通过。
+- 自动测试会触发真实按钮信号、玩家发射和物理碰撞，覆盖四类技能的各品质、分裂继承、暴击、突破和重开。
+
+```powershell
+& 'F:\Godot_v4.7.2-stable_win64.exe\Godot_v4.7.2-stable_win64_console.exe' `
+  --path 'F:\lingjiechuanshuo' --headless --audio-driver Dummy `
+  --fixed-fps 60 --script res://tests/fireball_buffs.gd
+```
+
+成功输出 `BUFF_TEST_RESULT ... failures=0`，退出码为 0。有画面的视觉检查可移除 `--headless`，并在命令末尾添加 `-- --capture`，截图写入 `.godot/buff-visual-check.png`。

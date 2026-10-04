@@ -98,8 +98,12 @@ func shoot_fireball():
 	dir_vector = dir_vector.normalized()
 	
 	var fb = fireball_scene.instantiate()
-	fb.setup(global_position, dir_vector, false)
-	get_tree().root.add_child(fb)
+	var buff_config:Dictionary = {}
+	if is_instance_valid(gm):
+		buff_config = gm.get_fireball_config()
+	# 入树前初始化，通过参数传入技能，避免火球查找不到场景节点。
+	fb.setup(global_position, dir_vector, false, buff_config)
+	get_parent().add_child(fb)
 	print("发射火球")
 
 func take_damage(amount:float):
