@@ -12,6 +12,7 @@ const SPEED_MULTS = [1.6, 2.4, 4.8, 9.6]
 const HIT_COUNTS = [3, 5, 9, 18]
 const CRIT_RATES = [0.05, 0.10, 0.20, 0.40]
 const CRIT_MULTS = [2.05, 2.10, 2.20, 2.40]
+const GIANT_SCALES = [1.8, 2.4, 3.2, 4.2]
 const QUALITY_MULTS = [2, 3, 6, 10]
 
 func _initialize():
@@ -47,8 +48,12 @@ func spawn_enemy(pos: Vector2):
 
 func shoot(target):
 	player.target_enemy = target
+	var before: Array = projectiles()
 	player.shoot_fireball()
-	return world.get_children().back()
+	for child in world.get_children():
+		if child.get_script() == preload("res://fireball.gd") and not child.is_secondary and not before.has(child):
+			return child
+	return null
 
 func projectiles() -> Array:
 	var result: Array = []
@@ -92,17 +97,19 @@ func run():
 			match kind:
 				0:
 					check(shot.enable_split and shot.split_count == SPLIT_COUNTS[quality], "Split quality")
+					check(projectiles().size() == 1 + SPLIT_COUNTS[quality], "Every split quality must spawn at launch")
 				1:
 					check(is_equal_approx(shot.speed, 80.0 * SPEED_MULTS[quality]), "Speed quality")
 				2:
 					check(shot.max_penetrate == HIT_COUNTS[quality], "Penetration quality")
 				3:
-					check(shot.enable_huge and shot.scale.is_equal_approx(Vector2.ONE * 1.8), "Giant visual scale")
+					check(shot.enable_huge and shot.scale.is_equal_approx(Vector2.ONE * GIANT_SCALES[quality]), "Giant visual scale")
 					check(is_equal_approx(shot.crit_rate, CRIT_RATES[quality]), "Critical probability")
 					check(is_equal_approx(shot.crit_mult, CRIT_MULTS[quality]), "Critical damage")
 					var shape = shot.get_node("CollisionShape2D")
-					check(shape.global_scale.is_equal_approx(Vector2.ONE * 1.8), "Giant collision scale")
-			shot.queue_free()
+					check(shape.global_scale.is_equal_approx(Vector2.ONE * GIANT_SCALES[quality]), "Giant collision scale")
+			for projectile in projectiles():
+				projectile.queue_free()
 			await process_frame
 	await clear_combat()
 	print("PASS: all buttons and 16 buff qualities reach the real player projectile")
@@ -139,14 +146,14 @@ func run():
 		await clear_combat()
 	print("PASS: real movement and penetration collisions")
 
-	# Real collision spawns children; children inherit all other buffs and cannot split recursively.
+	# Split happens at launch; children inherit all other buffs and cannot split recursively.
 	gm.player_buffs.clear()
 	for kind in range(4):
 		choose(kind, 1)
 	target = spawn_enemy(Vector2(90, 0))
 	var primary = shoot(target)
-	primary.crit_rate = 0.0
-	await create_timer(0.7).timeout
+	for projectile in projectiles():
+		projectile.crit_rate = 0.0
 	var secondary_count = 0
 	for shot in projectiles():
 		if not shot.is_secondary:
@@ -154,27 +161,66 @@ func run():
 		secondary_count += 1
 		check(not shot.enable_split, "Secondary must not split recursively")
 		check(is_equal_approx(shot.speed, 192) and shot.max_penetrate == 5, "Secondary inherits speed/penetration")
-		check(shot.enable_huge and shot.scale.is_equal_approx(Vector2.ONE * 1.8), "Secondary inherits giant buff")
-		check(shot.hit_enemy_list.has(target), "Secondary must not immediately re-hit source enemy")
-	check(secondary_count == 3, "Split must spawn exactly three secondary projectiles")
-	check(primary.penetrate_count == 1 and target.hp == 990, "Source hit must deal damage once")
+		check(shot.enable_huge and shot.scale.is_equal_approx(Vector2.ONE * GIANT_SCALES[1]), "Secondary inherits giant buff")
+	check(secondary_count == 3, "Split must spawn exactly three secondary projectiles at launch")
+	check(primary.penetrate_count == 0 and target.hp == 1000, "Split must not wait for a hit to spawn")
+	await create_timer(0.7).timeout
+	check(target.hp <= 970, "Split projectiles must deal damage after launch")
 	await clear_combat()
 	print("PASS: actual collision splitting and combined buffs")
 
-	# Split alone queues the parent for deletion in the collision frame. Children must survive it.
+	# Split alone creates children immediately; children must survive parent cleanup.
 	gm.player_buffs = {1: buff(1, 1)}
 	choose(0, 0)
-	target = spawn_enemy(Vector2(90, 0))
+	target = spawn_enemy(Vector2(400, 0))
+	target.collision_layer = 0
+	for frame in range(3):
+		await physics_frame
 	var split_only = shoot(target)
-	await create_timer(0.7).timeout
+	check(projectiles().size() == 3, "Launch split must create two children beside the primary")
+	await physics_frame
+	var child = projectiles()[1]
+	var next_target = spawn_enemy(child.global_position + child.dir * 100)
+	var main_target = spawn_enemy(split_only.global_position + split_only.dir * 100)
+	await create_timer(0.9).timeout
 	check(not is_instance_valid(split_only), "Split-only primary must stop after one hit")
-	check(projectiles().size() == 2, "Deferred children must survive parent deletion")
-	var child = projectiles().front()
-	var next_target = spawn_enemy(child.global_position + child.dir * 40)
-	await create_timer(0.4).timeout
+	check(main_target.hp <= 1000, "Primary launch path remains valid")
 	check(next_target.hp < 1000, "Secondary projectile must actually damage another enemy")
 	await clear_combat()
 	print("PASS: split-only parent cleanup and secondary damage")
+
+	# A stationary projectile isolates actual width from speed/penetration/aiming.
+	# Enemies are placed in distinct rows; each level must cover one more row.
+	var previous_hits = 0
+	for quality in range(4):
+		gm.player_buffs.clear()
+		choose(3, quality)
+		var victims: Array = []
+		for offset in [10.0, 25.0, 36.0, 47.0]:
+			var victim = spawn_enemy(Vector2(220, offset))
+			var shape_node = victim.get_node("CollisionShape2D")
+			shape_node.shape = shape_node.shape.duplicate()
+			shape_node.shape.radius = 1.0
+			victims.append(victim)
+		# Let enemy transforms enter the physics server before adding the stationary fireball.
+		for frame in range(3):
+			await physics_frame
+		var broad_shot = FIREBALL.instantiate()
+		broad_shot.setup(Vector2(220, 0), Vector2.RIGHT, false, gm.get_fireball_config())
+		world.add_child(broad_shot)
+		broad_shot.set_physics_process(false)
+		broad_shot.crit_rate = 0.0
+		await create_timer(0.15).timeout
+		var hits = 0
+		for victim in victims:
+			if victim.hp < 1000:
+				hits += 1
+		check(hits == quality + 1, "Giant level must cover its actual collision radius")
+		check(hits > previous_hits, "Each giant level must hit more rows without penetration")
+		previous_hits = hits
+		print("GIANT_WIDTH level=", quality + 1, " scale=", GIANT_SCALES[quality], " hits=", hits)
+		await clear_combat()
+	print("PASS: progressively larger real collision coverage and group damage")
 
 	# Force each RNG branch, keeping the real damage path and collision callback.
 	gm.player_buffs = {1: buff(1, 1), 3: buff(3, 3)}

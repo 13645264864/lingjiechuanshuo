@@ -23,10 +23,10 @@ var quality_config = [
 	{"weight":5, "mult":10,"lv":4, "color":Color(1,0.65,0)}
 ]
 var buff_base = [
-	{"name":"分裂", "desc":"击中产生次级火球"},
+	{"name":"分裂", "desc":"发射时同时射出次级火球"},
 	{"name":"高速", "desc":"火球飞行速度提升"},
 	{"name":"穿透", "desc":"火球可以穿透敌人"},
-	{"name":"巨型火球", "desc":"增加暴击概率与爆伤"}
+	{"name":"巨型火球", "desc":"扩大火球和群体命中范围，提升暴击"}
 ]
 
 var player_buffs:Dictionary = {}
@@ -99,8 +99,9 @@ func get_fireball_config() -> Dictionary:
 				var crit_level := _quality_index(q_mult)
 				var crit_rates = [0.05, 0.10, 0.20, 0.40]
 				var crit_multipliers = [2.05, 2.10, 2.20, 2.40]
+				var scale_values = [1.8, 2.4, 3.2, 4.2]
 				config.enable_huge = true
-				config.scale_mult = 1.8
+				config.scale_mult = scale_values[crit_level]
 				config.crit_rate = crit_rates[crit_level]
 				config.crit_mult = crit_multipliers[crit_level]
 

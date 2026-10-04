@@ -4,7 +4,7 @@
 [ext_resource type="Texture2D" uid="uid://bxwg5ulao2gb0" path="res://Sprites/Fireball.png" id="2_wdani"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_uit24"]
-radius = 2.0
+radius = 12.0
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_nix7o"]
 atlas = ExtResource("2_wdani")

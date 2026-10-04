@@ -19,6 +19,8 @@ var pending_scale_mod: float = 1.0
 var buff_config: Dictionary = {}
 var rng = RandomNumberGenerator.new()
 var base_speed: float = -1.0
+var pending_contacts: Array[Node2D] = []
+var contact_batch_pending: bool = false
 
 @onready var anim = $AnimatedSprite2D
 
@@ -65,6 +67,29 @@ func _physics_process(delta):
 func _on_body_hit(body: Node2D):
 	if is_queued_for_deletion() or hit_enemy_list.has(body):
 		return
+	if enable_huge:
+		# 等本帧全部碰撞信号收集完成，再结算并决定是否销毁。
+		if not pending_contacts.has(body):
+			pending_contacts.append(body)
+		if not contact_batch_pending:
+			contact_batch_pending = true
+			resolve_contact_batch.call_deferred()
+		return
+	damage_body(body)
+	if penetrate_count >= max_penetrate:
+		queue_free()
+
+func resolve_contact_batch():
+	for body in pending_contacts:
+		damage_body(body)
+	pending_contacts.clear()
+	contact_batch_pending = false
+	if penetrate_count >= max_penetrate:
+		queue_free()
+
+func damage_body(body: Node2D):
+	if not is_instance_valid(body) or hit_enemy_list.has(body):
+		return
 	if not body.is_in_group("enemy") or not body.has_method("take_damage"):
 		return
 	if body.get("is_dead") == true:
@@ -75,18 +100,17 @@ func _on_body_hit(body: Node2D):
 		final_dmg *= crit_mult
 	body.take_damage(final_dmg)
 	penetrate_count += 1
-	if enable_split:
-		create_split_fireball(body)
-	if penetrate_count >= max_penetrate:
-		queue_free()
 
-func create_split_fireball(hit_body: Node2D):
-	# 在物理查询期间延迟加入次级火球，避免修改锁定的物理空间。
+func spawn_split_fireballs():
+	if is_secondary or split_count <= 0 or not is_instance_valid(get_parent()):
+		return
+	# 主火球发射时立即生成次级火球；次级火球继承速度、穿透和巨型效果，
+	# 但 setup 中会把它们标记为 secondary，因此不会再次分裂。
 	var container = get_parent()
 	var start_angle = deg_to_rad(-45.0)
 	var angle_step = deg_to_rad(90.0 / maxf(split_count - 1, 1))
 	for i in range(split_count):
 		var fb = load("res://fireball.tscn").instantiate()
 		fb.setup(global_position, dir.rotated(start_angle + angle_step * i),
-			true, buff_config, [hit_body])
-		container.call_deferred("add_child", fb)
+			true, buff_config)
+		container.add_child(fb)

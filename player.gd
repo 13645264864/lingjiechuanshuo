@@ -104,6 +104,9 @@ func shoot_fireball():
 	# 入树前初始化，通过参数传入技能，避免火球查找不到场景节点。
 	fb.setup(global_position, dir_vector, false, buff_config)
 	get_parent().add_child(fb)
+	# 分裂在发射瞬间发生，而不是等主火球命中敌人后才发生。
+	if fb.enable_split:
+		fb.spawn_split_fireballs()
 	print("发射火球")
 
 func take_damage(amount:float):
