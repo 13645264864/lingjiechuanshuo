@@ -66,6 +66,54 @@ func get_total_buff_stats() -> Dictionary:
 	print("==== 汇总完成：",stat,"\n")
 	return stat
 
+# 火球生成时读取的最终属性。所有技能效果在这里统一计算，避免
+# 火球脚本和选技能逻辑各自维护一套倍率。
+func get_fireball_config() -> Dictionary:
+	var config = {
+		"speed_mult": 1.0,
+		"penetrate_count": 1,
+		"split_count": 0,
+		"enable_huge": false,
+		"crit_rate": 0.05,
+		"crit_mult": 2.05,
+		"scale_mult": 1.0
+	}
+
+	for buff_type in player_buffs:
+		var buff:Dictionary = player_buffs[buff_type]
+		var q_mult:int = int(buff.get("mult", 2))
+		match int(buff_type):
+			BuffType.SPLIT:
+				var split_level := _quality_index(q_mult)
+				var split_values = [2, 3, 6, 12]
+				config.split_count = split_values[split_level]
+			BuffType.SPEED:
+				var speed_level := _quality_index(q_mult)
+				var speed_values = [1.6, 2.4, 4.8, 9.6]
+				config.speed_mult = speed_values[speed_level]
+			BuffType.PENETRATE:
+				var penetrate_level := _quality_index(q_mult)
+				var penetrate_values = [3, 5, 9, 18]
+				config.penetrate_count = penetrate_values[penetrate_level]
+			BuffType.BIG_FIRE:
+				var crit_level := _quality_index(q_mult)
+				var crit_rates = [0.05, 0.10, 0.20, 0.40]
+				var crit_multipliers = [2.05, 2.10, 2.20, 2.40]
+				config.enable_huge = true
+				config.scale_mult = 1.8
+				config.crit_rate = crit_rates[crit_level]
+				config.crit_mult = crit_multipliers[crit_level]
+
+	return config
+
+func _quality_index(q_mult:int) -> int:
+	match q_mult:
+		2: return 0
+		3: return 1
+		6: return 2
+		10: return 3
+	return 0
+
 func _ready():
 	rng.randomize()
 	canvas = CanvasLayer.new()
@@ -186,7 +234,7 @@ func roll_one_buff():
 		print("所有buff已满级，无可用buff")
 		return null
 		
-	var picked_index = rng.randi_range(0, available_types.size())
+	var picked_index = rng.randi_range(0, available_types.size() - 1)
 	var picked_type = available_types[picked_index]
 	print("picked_type = ", picked_type)
 	
@@ -203,7 +251,7 @@ func roll_one_buff():
 	if total_weight <= 0:
 		return null
 	
-	var roll = rng.randi_range(0, total_weight)
+	var roll = rng.randi_range(0, total_weight - 1)
 	var sum =0
 	var selected_q
 	for q in available_quality:
@@ -211,6 +259,8 @@ func roll_one_buff():
 		if roll < sum:
 			selected_q = q
 			break
+	if selected_q == null:
+		selected_q = available_quality.back()
 	
 	if picked_type <0 or picked_type >= buff_base.size():
 		print("ERROR picked_type越界！值：",picked_type)
