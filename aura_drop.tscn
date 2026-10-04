@@ -1,0 +1,17 @@
+[gd_scene format=3 uid="uid://cn7wkfffbf4v7"]
+
+[ext_resource type="Script" uid="uid://brky6vjnlljdj" path="res://aura_drop.gd" id="1_8e4bc"]
+[ext_resource type="Texture2D" uid="uid://cnaa0otw3wmbo" path="res://Sprites/linqi.png" id="2_c2xbr"]
+
+[sub_resource type="CircleShape2D" id="CircleShape2D_8vbgw"]
+radius = 19.0
+
+[node name="aura_drop" type="Area2D" unique_id=509196135]
+script = ExtResource("1_8e4bc")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=1745948203]
+scale = Vector2(0.3828125, 0.3828125)
+texture = ExtResource("2_c2xbr")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1781898551]
+shape = SubResource("CircleShape2D_8vbgw")
