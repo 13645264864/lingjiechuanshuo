@@ -35,9 +35,12 @@ func setup_spawn(spawn_position: Vector2, target: CharacterBody2D, minute_level:
 	damage = base_damage * pow(1.22, boss_level - 1)
 	move_speed = base_speed * (1.0 + min((boss_level - 1) * 0.06, 0.48))
 	# Boss is substantially larger than regular enemies and receives a violet-red skin.
-	# The boss is about 3–4 times the regular enemy, with only a small
-	# increase on later minutes so it remains readable on a phone screen.
-	scale = Vector2.ONE * (3.2 + min(boss_level - 1, 4) * 0.2)
+	# Keep the root at 1.0. The sprite and collider are sized independently
+	# from the same target diameter so the visible body matches its hit body.
+	var body_scale = 2.8 + min(boss_level - 1, 4) * 0.1
+	scale = Vector2.ONE
+	$AnimatedSprite2D.scale = Vector2.ONE * body_scale
+	$CollisionShape2D.scale = Vector2.ONE * (7.4 * body_scale)
 	$AnimatedSprite2D.modulate = Color(0.95, 0.34, 0.72)
 
 func _physics_process(delta):

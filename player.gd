@@ -3,6 +3,7 @@ var hp:float = 100.0
 var max_hp:float =100.0
 var is_dead:bool = false
 @onready var anim = $AnimatedSprite2D
+@onready var dodge_collision_shape:CollisionShape2D = $CollisionShape2D
 var input_dir:Vector2 = Vector2.ZERO
 var last_dir:Vector2 = Vector2.DOWN
 @export var fireball_cd:float = 1.2
@@ -162,6 +163,7 @@ func dodge():
 	# pass through enemies instead of being stopped by their bodies.
 	collision_layer = 0
 	collision_mask = 0
+	dodge_collision_shape.set_deferred("disabled", true)
 	dodge_direction = input_dir.normalized()
 	if dodge_direction == Vector2.ZERO:
 		dodge_direction = last_dir.normalized()
@@ -176,6 +178,7 @@ func end_dodge():
 	is_invincible = false
 	collision_layer = normal_collision_layer
 	collision_mask = normal_collision_mask
+	dodge_collision_shape.set_deferred("disabled", false)
 
 func die():
 	is_dead = true

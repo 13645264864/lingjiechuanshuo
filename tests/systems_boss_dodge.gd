@@ -48,9 +48,17 @@ func run():
 	check(bosses.size() == 1, "Exactly one boss at minute one")
 	var boss = bosses[0]
 	check(boss.max_hp == 900.0 and boss.damage == 28.0, "Boss first-minute stats")
-	check(boss.scale.x >= 3.2 and boss.scale.x <= 4.0 and boss.get_node("CollisionShape2D").shape.radius == 13.0, "Boss is 3-4 times regular size")
+	var boss_texture = boss.get_node("AnimatedSprite2D").sprite_frames.get_frame_texture("run_right", 0)
+	var boss_sprite_diameter = boss_texture.get_width() * boss.get_node("AnimatedSprite2D").global_scale.x
+	var boss_collision_diameter = boss.get_node("CollisionShape2D").shape.radius * 2.0 * boss.get_node("CollisionShape2D").global_scale.x
+	check(boss.scale == Vector2.ONE and boss_sprite_diameter >= 440.0 and boss_sprite_diameter <= 620.0, "Boss sprite is 3-4 times regular size")
+	check(abs(boss_sprite_diameter - boss_collision_diameter) < 20.0, "Boss sprite and collider have matching size")
 	check(gm.boss_bar.visible and gm.boss_bar.max_value == boss.max_hp, "Boss bar is visible and linked")
 	check(boss.get_node("AnimatedSprite2D").sprite_frames != world.get_node("Player/AnimatedSprite2D").sprite_frames, "Boss has an independent sprite skin")
+	player.set_physics_process(false)
+	for enemy in root.get_tree().get_nodes_in_group("enemy"):
+		if enemy != boss:
+			enemy.set_physics_process(false)
 	gm._process(0.0)
 	check(root.get_tree().get_nodes_in_group("boss").size() == 1, "Boss does not duplicate in same minute")
 
@@ -63,12 +71,13 @@ func run():
 	blocker.global_position = player.global_position + Vector2(110, 0)
 	var before = player.global_position
 	player.dodge()
-	check(player.is_invincible and player.dodge_time_left > 0.0 and player.collision_layer == 0 and player.collision_mask == 0, "Dodge starts invulnerability and ghost collision")
+	await physics_frame
+	check(player.is_invincible and player.dodge_time_left > 0.0 and player.collision_layer == 0 and player.collision_mask == 0 and player.dodge_collision_shape.disabled, "Dodge starts invulnerability and ghost collision")
 	for frame in range(20):
 		player._physics_process(0.016)
 	check(player.global_position.x > blocker.global_position.x, "Dodge passes through enemy body")
 	await create_timer(0.3).timeout
-	check(not player.is_invincible and player.collision_layer == player.normal_collision_layer, "Dodge invulnerability and ghost collision end")
+	check(not player.is_invincible and player.collision_layer == player.normal_collision_layer and not player.dodge_collision_shape.disabled, "Dodge invulnerability and ghost collision end")
 	player.dodge_timer = 0.0
 	gm.dodge_button.pressed.emit()
 	check(player.is_invincible, "Mobile dodge button triggers same dodge")
