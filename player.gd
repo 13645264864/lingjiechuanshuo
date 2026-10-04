@@ -33,8 +33,12 @@ var dodge_time_left:float = 0.0
 var dodge_speed:float = 620.0
 var is_invincible:bool = false
 var dodge_direction:Vector2 = Vector2.DOWN
+var normal_collision_layer:int = 1
+var normal_collision_mask:int = 1
 
 func _ready():
+	normal_collision_layer = collision_layer
+	normal_collision_mask = collision_mask
 	gm = get_node_or_null("/root/Node2D/GameManager")
 	print("gm节点 = ", gm)
 	# 【重点】匹配节点层级
@@ -154,15 +158,24 @@ func dodge():
 	dodge_timer = dodge_cooldown
 	dodge_time_left = dodge_duration
 	is_invincible = true
+	# Temporarily remove the player from physics collision so the dash can
+	# pass through enemies instead of being stopped by their bodies.
+	collision_layer = 0
+	collision_mask = 0
 	dodge_direction = input_dir.normalized()
 	if dodge_direction == Vector2.ZERO:
 		dodge_direction = last_dir.normalized()
 	var invuln_tween = create_tween()
 	invuln_tween.tween_interval(dodge_duration)
-	invuln_tween.tween_callback(func(): is_invincible = false)
+	invuln_tween.tween_callback(end_dodge)
 	var flash_tween = create_tween().set_loops(3)
 	flash_tween.tween_property(anim, "modulate:a", 0.25, 0.06)
 	flash_tween.tween_property(anim, "modulate:a", 1.0, 0.06)
+
+func end_dodge():
+	is_invincible = false
+	collision_layer = normal_collision_layer
+	collision_mask = normal_collision_mask
 
 func die():
 	is_dead = true
