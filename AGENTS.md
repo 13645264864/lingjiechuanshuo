@@ -39,6 +39,10 @@
 - 敌人死亡掉落灵气，灵气累计后提升境界。
 - 境界提升时出现三选一 Buff：分裂、高速、穿透、巨型火球/暴击。
 - 支持开始游戏、计时、死亡界面和重新开始。
+- 普通敌人从玩家当前相机可见区域外生成，出生点与玩家保持安全距离。
+- 普通敌人按游戏分钟成长：生命值 `1.18^分钟`，攻击力 `1.12^分钟`，移动速度每分钟增加 3.5%，最多增加 45%。
+- 每分钟最多生成一只 Boss；Boss 拥有独立大体积皮肤、冲刺动作、独立属性曲线和顶部 Boss 血条。
+- 玩家可按 Shift 或点击移动端“闪避 SHIFT”按钮，沿当前移动/朝向突进并获得短暂无敌帧。
 
 ## 版本控制
 
@@ -76,3 +80,13 @@ git push -u origin main
 ```
 
 成功输出 `BUFF_TEST_RESULT ... failures=0`，退出码为 0。有画面的视觉检查可移除 `--headless`，并在命令末尾添加 `-- --capture`，截图写入 `.godot/buff-visual-check.png`。
+
+Boss、刷怪和闪避系统回归测试：
+
+```powershell
+& 'F:\Godot_v4.7.2-stable_win64.exe\Godot_v4.7.2-stable_win64_console.exe' `
+  --path 'F:\lingjiechuanshuo' --headless --audio-driver Dummy `
+  --fixed-fps 60 --script res://tests/systems_boss_dodge.gd
+```
+
+成功输出 `SYSTEM_TEST_RESULT ... failures=0`，退出码为 0。
