@@ -21,6 +21,11 @@
 
 ## 当前架构
 
+- 联网原型：`network/online_test.tscn` 独立桌面测试入口，支持 CloudBase 用户名密码登录、创建角色、读取存档和领取修为；尚未替换离线主菜单或发布 Android 联网包。
+- CloudBase 环境 `chumowujin-beta-d0faxqcq5b2c32fa`（上海、PostgreSQL），迁移文件位于 `cloudbase/migrations/`；角色修为由服务器 RPC 计算，每分钟 1 点，最多 12 小时，RLS 隔离用户，禁止客户端直接修改修为。
+- `network/cloudbase_config.json` 仅含环境 ID 与公开 Publishable Key；管理凭证和回归测试密码不能提交。联网验证为 `tests/cloudbase_online.gd`，运行说明见 `cloudbase/README.md`。
+- 现有 APK 仍为离线版；Android 导出排除 `network/*`、`cloudbase/*`。正式联网发布前必须同步更新游戏内与网页隐私政策、账号管理和 INTERNET 权限。
+
 - `main_menu.tscn` / `main_menu.gd`：使用用户提供的 demon slayer.jpg 作为主页面背景，仅有“开始游戏”；进入关卡后直接开始初始技能选择。
 - `touch_joystick.gd`：左侧浮动虚拟摇杆，以当前手指落点为中心，松手隐藏；移动方向与键盘合并，暂停、松手、旋转或切出应用时释放输入。
 - `touch_action_button.gd`：直接接收多点触摸，允许左手移动同时右手闪避或发动剑魂。
