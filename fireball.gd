@@ -21,7 +21,6 @@ var rng = RandomNumberGenerator.new()
 var base_speed: float = -1.0
 var pending_contacts: Array[Node2D] = []
 var contact_batch_pending: bool = false
-
 @onready var anim = $AnimatedSprite2D
 
 # 配置快照由玩家传入；此方法不依赖火球已经进入场景树。
@@ -50,6 +49,8 @@ func setup(pos: Vector2, direction: Vector2, secondary: bool = false,
 		apply_visual_config()
 
 func _ready():
+	if get_parent().has_node("FirstLevelMap"):
+		collision_mask |= 6
 	global_position = spawn_pos
 	body_entered.connect(_on_body_hit)
 	apply_visual_config()
@@ -57,6 +58,7 @@ func _ready():
 func apply_visual_config():
 	# 体型同时作用于图像和碰撞范围。
 	scale = Vector2.ONE * pending_scale_mod
+	anim.rotation = dir.angle()
 	anim.play("Fireball")
 
 func _physics_process(delta):
@@ -65,6 +67,9 @@ func _physics_process(delta):
 		queue_free()
 
 func _on_body_hit(body: Node2D):
+	if body is StaticBody2D:
+		queue_free()
+		return
 	if is_queued_for_deletion() or hit_enemy_list.has(body):
 		return
 	if enable_huge:
@@ -107,10 +112,20 @@ func spawn_split_fireballs():
 	# 主火球发射时立即生成次级火球；次级火球继承速度、穿透和巨型效果，
 	# 但 setup 中会把它们标记为 secondary，因此不会再次分裂。
 	var container = get_parent()
-	var start_angle = deg_to_rad(-45.0)
-	var angle_step = deg_to_rad(90.0 / maxf(split_count - 1, 1))
+	var pair_count := int(ceil(split_count / 2.0))
+	var half_spread := deg_to_rad(minf(55.0 + split_count * 3.0, 90.0))
+	var launch_radius := 30.0 + 20.0 * pending_scale_mod
 	for i in range(split_count):
+		var pair_index := int(i / 2)
+		var fraction := float(pair_index) / maxf(pair_count - 1, 1)
+		var angle := half_spread if pair_count == 1 else lerpf(deg_to_rad(22.0), half_spread, fraction)
+		angle *= -1.0 if i % 2 == 0 else 1.0
+		var direction := dir.rotated(angle)
+		var row_offset := 32.0 * pending_scale_mod if split_count >= 6 and pair_index % 2 == 1 else 0.0
 		var fb = load("res://fireball.tscn").instantiate()
-		fb.setup(global_position, dir.rotated(start_angle + angle_step * i),
+		fb.speed = base_speed
+		fb.damage = damage
+		fb.max_range = max_range
+		fb.setup(global_position + direction * (launch_radius + row_offset), direction,
 			true, buff_config)
 		container.add_child(fb)

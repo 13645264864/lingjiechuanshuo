@@ -5,3 +5,12 @@
 export/
 build/
 *.log
+# NightBorne is approved for game use, but its raw artwork cannot be redistributed.
+Sprites/nightborne/*
+!Sprites/nightborne/LICENSE.md
+# Cainos permits game use but not standalone redistribution of source textures.
+Sprites/cainos/*
+!Sprites/cainos/LICENSE.md
+# User-supplied archer artwork stays local until its distribution terms are known.
+Sprites/arcane_archer/*
+!Sprites/arcane_archer/SOURCE.md

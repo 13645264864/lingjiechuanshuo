@@ -1,51 +1,42 @@
-[gd_scene format=3 uid="uid://qkm52t0q4736"]
+[gd_scene load_steps=8 format=3 uid="uid://qkm52t0q4736"]
 
-[ext_resource type="Script" uid="uid://djj82jikt8c5c" path="res://fireball.gd" id="1_olwj8"]
-[ext_resource type="Texture2D" uid="uid://bxwg5ulao2gb0" path="res://Sprites/Fireball.png" id="2_wdani"]
+[ext_resource type="Script" uid="uid://djj82jikt8c5c" path="res://fireball.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://Sprites/fireball_fb00/FB001.png" id="2_frame_1"]
+[ext_resource type="Texture2D" path="res://Sprites/fireball_fb00/FB002.png" id="3_frame_2"]
+[ext_resource type="Texture2D" path="res://Sprites/fireball_fb00/FB003.png" id="4_frame_3"]
+[ext_resource type="Texture2D" path="res://Sprites/fireball_fb00/FB004.png" id="5_frame_4"]
+[ext_resource type="Texture2D" path="res://Sprites/fireball_fb00/FB005.png" id="6_frame_5"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_uit24"]
 radius = 12.0
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_nix7o"]
-atlas = ExtResource("2_wdani")
-region = Rect2(0, 0, 32, 32)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_m4vqi"]
-atlas = ExtResource("2_wdani")
-region = Rect2(32, 0, 32, 32)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_lk87q"]
-atlas = ExtResource("2_wdani")
-region = Rect2(64, 0, 32, 32)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_gveuj"]
-atlas = ExtResource("2_wdani")
-region = Rect2(96, 0, 32, 32)
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_8vbgw"]
 animations = [{
 "frames": [{
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_nix7o")
+"texture": ExtResource("2_frame_1")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_m4vqi")
+"texture": ExtResource("3_frame_2")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_lk87q")
+"texture": ExtResource("4_frame_3")
 }, {
 "duration": 1.0,
-"texture": SubResource("AtlasTexture_gveuj")
+"texture": ExtResource("5_frame_4")
+}, {
+"duration": 1.0,
+"texture": ExtResource("6_frame_5")
 }],
 "loop": 1,
 "name": &"Fireball",
-"speed": 8.0
+"speed": 12.0
 }]
 
 [node name="Fireball" type="Area2D" unique_id=1750185312]
 z_index = 2
 z_as_relative = false
-script = ExtResource("1_olwj8")
+script = ExtResource("1_script")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1601874993]
 shape = SubResource("CircleShape2D_uit24")
@@ -53,6 +44,6 @@ shape = SubResource("CircleShape2D_uit24")
 [node name="Timer" type="Timer" parent="." unique_id=1647841218]
 
 [node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1617246776]
+texture_filter = 1
 sprite_frames = SubResource("SpriteFrames_8vbgw")
 animation = &"Fireball"
-frame_progress = 0.7739806

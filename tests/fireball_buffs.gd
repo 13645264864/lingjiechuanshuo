@@ -71,6 +71,7 @@ func clear_combat():
 func run():
 	# Even a failed test must terminate rather than leave Godot running forever.
 	create_timer(45.0).timeout.connect(func(): quit(2))
+	root.size = Vector2i(1152, 648)
 	world = load("res://main.tscn").instantiate()
 	root.add_child(world)
 	current_scene = world
@@ -80,11 +81,19 @@ func run():
 	player.set_physics_process(false)
 	gm.set_process(false)
 	gm.rebuild_buff_buttons()
+	gm.buff_panel.show()
+	await process_frame
+	gm.layout_controls()
+	check(gm.equipped_skill_label.text == "目前装备的功法\n火球术（凡品）", "Upgrade UI names currently equipped technique")
+	check(gm.equipped_skill_label.get_global_rect().end.y < gm.buff_buttons[0].get_global_rect().position.y, "Technique name is above upgrade choices: title=%s card=%s viewport=%s" % [gm.equipped_skill_label.get_global_rect(), gm.buff_buttons[0].get_global_rect(), root.get_visible_rect()])
+	gm.buff_panel.hide()
 	var target = spawn_enemy(Vector2(400, 0))
 	var baseline = shoot(target)
 	check(baseline.speed == 80.0 and baseline.max_penetrate == 1,
 		"Unmodified projectile must keep its base stats")
 	check(baseline.scale == Vector2.ONE and baseline.anim.is_playing(), "Base animation must play")
+	check(baseline.anim.sprite_frames.get_frame_count("Fireball") == 5, "Base projectile uses supplied five-frame artwork")
+	check(get_nodes_in_group("fireball_trail").is_empty(), "Base projectile has no generated flame trail")
 	baseline.queue_free()
 	await process_frame
 

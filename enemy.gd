@@ -10,11 +10,20 @@ var is_dead:bool = false
 @export var damage_scene:PackedScene
 @export var aura_drop_scene:PackedScene
 var tween:Tween
+@export var rush_speed:float = 680.0
+@export var rush_distance:float = 300.0
+var rush_cooldown:float = 1.2
+var rush_phase:String = "chase"
+var rush_timer:float = 0.0
+var rush_direction:Vector2 = Vector2.RIGHT
+var rush_remaining:float = 0.0
 
 func _ready():
 	# 从主场景找Player
 	player = get_parent().get_node_or_null("Player")
 	# 出生点和成长属性由 GameManager 在加入场景后设置。
+	add_to_group("enemy")
+	rush_cooldown = randf_range(0.8, 2.0)
 
 func setup_spawn(spawn_position:Vector2, target:CharacterBody2D, game_minutes:float):
 	global_position = spawn_position
@@ -67,18 +76,51 @@ func _physics_process(delta):
 	if attack_timer > 0:
 		attack_timer -= delta
 	
-	if player == null:
+	if not is_instance_valid(player) or player.is_dead:
 		return
+	var gm = get_parent().get_node_or_null("GameManager")
+	if gm != null and gm.level_map != null and (not gm.game_started or gm.game_over): return
 	
 	var dir_to_player = (player.global_position - global_position).normalized()
 	velocity = dir_to_player * move_speed
+	rush_cooldown = maxf(0.0, rush_cooldown - delta)
+	if rush_phase == "chase" and rush_cooldown <= 0.0:
+		var distance := global_position.distance_to(player.global_position)
+		if distance > 85.0 and distance < 480.0 and rush_has_line_of_sight():
+			rush_phase = "windup"
+			rush_timer = 0.45
+			rush_direction = (player.global_position - global_position + player.velocity * 0.18).normalized()
+	if rush_phase == "windup":
+		velocity = Vector2.ZERO
+		rush_timer -= delta
+		if rush_timer <= 0.0:
+			rush_phase = "rush"
+			rush_remaining = rush_distance
+	elif rush_phase == "rush":
+		velocity = rush_direction * minf(rush_speed, rush_remaining / delta)
+		dir_to_player = rush_direction
+	elif rush_phase == "recover":
+		velocity = Vector2.ZERO
+		rush_timer -= delta
+		if rush_timer <= 0.0: rush_phase = "chase"
+	queue_redraw()
 	
 	if dir_to_player.x > 0:
 		$AnimatedSprite2D.play("run_right")
 	elif dir_to_player.x < 0:
 		$AnimatedSprite2D.play("run_left")
 	
+	var previous_position := global_position
 	move_and_slide()
+	if rush_phase == "rush":
+		rush_remaining -= global_position.distance_to(previous_position)
+		if rush_remaining <= 1.0 or get_slide_collision_count() > 0:
+			rush_phase = "recover"
+			rush_timer = 0.55
+			rush_cooldown = randf_range(2.6, 3.6)
+	if gm != null and gm.level_map != null and has_meta("room_id"):
+		var bounds: Rect2 = gm.level_map.rooms[get_meta("room_id")].bounds.grow(-90)
+		global_position = global_position.clamp(bounds.position,bounds.end)
 	
 	# 遍历碰撞检测，攻击玩家
 	for i in get_slide_collision_count():
@@ -88,6 +130,16 @@ func _physics_process(delta):
 			player.take_damage(damage)
 			attack_timer = attack_cd
 			break
+
+func rush_has_line_of_sight() -> bool:
+	var query := PhysicsRayQueryParameters2D.create(global_position, player.global_position, 6, [get_rid()])
+	return get_world_2d().direct_space_state.intersect_ray(query).is_empty()
+
+func _draw():
+	if is_dead or rush_phase != "windup": return
+	var endpoint := to_local(global_position + rush_direction * rush_distance)
+	draw_line(Vector2.ZERO, endpoint, Color(1.0, 0.25, 0.08, 0.55), 2.0)
+	draw_circle(Vector2.ZERO, 15.0, Color(1.0, 0.35, 0.08, 0.85), false, 2.0)
 
 func take_damage(amount:float):
 	if is_dead:

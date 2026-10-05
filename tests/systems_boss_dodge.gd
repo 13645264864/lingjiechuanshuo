@@ -48,10 +48,11 @@ func run():
 	check(bosses.size() == 1, "Exactly one boss at minute one")
 	var boss = bosses[0]
 	check(boss.max_hp == 900.0 and boss.damage == 28.0, "Boss first-minute stats")
-	var boss_texture = boss.get_node("AnimatedSprite2D").sprite_frames.get_frame_texture("run_right", 0)
-	var boss_sprite_diameter = boss_texture.get_width() * boss.get_node("AnimatedSprite2D").global_scale.x
+	var boss_sprite_diameter = boss.get_node("AnimatedSprite2D").body_size * boss.get_node("AnimatedSprite2D").global_scale.x
 	var boss_collision_diameter = boss.get_node("CollisionShape2D").shape.radius * 2.0 * boss.get_node("CollisionShape2D").global_scale.x
-	check(boss.scale == Vector2.ONE and boss_sprite_diameter >= 440.0 and boss_sprite_diameter <= 620.0, "Boss sprite is 3-4 times regular size")
+	var regular_sprite = enemies[0].get_node("AnimatedSprite2D")
+	var regular_diameter = regular_sprite.sprite_frames.get_frame_texture("run_right", 0).get_width() * regular_sprite.global_scale.x
+	check(boss.scale == Vector2.ONE and is_equal_approx(boss_sprite_diameter, regular_diameter * 2.0), "Boss sprite is exactly twice regular size")
 	check(abs(boss_sprite_diameter - boss_collision_diameter) < 20.0, "Boss sprite and collider have matching size")
 	check(gm.boss_bar.visible and gm.boss_bar.max_value == boss.max_hp, "Boss bar is visible and linked")
 	check(boss.get_node("AnimatedSprite2D").sprite_frames != world.get_node("Player/AnimatedSprite2D").sprite_frames, "Boss has an independent sprite skin")
@@ -73,7 +74,10 @@ func run():
 	player.dodge()
 	await physics_frame
 	check(player.is_invincible and player.dodge_time_left > 0.0 and player.collision_layer == 0 and player.collision_mask == 0 and player.dodge_collision_shape.disabled, "Dodge starts invulnerability and ghost collision")
-	for frame in range(20):
+	var hp_before_dodge = player.hp
+	player.take_damage(15.0)
+	check(player.hp == hp_before_dodge, "Damage is rejected on dash activation")
+	for frame in range(30):
 		player._physics_process(0.016)
 	check(player.global_position.x > blocker.global_position.x, "Dodge passes through enemy body")
 	await create_timer(0.3).timeout

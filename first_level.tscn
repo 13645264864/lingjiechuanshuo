@@ -1,0 +1,16 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="PackedScene" path="res://main.tscn" id="1_main"]
+[ext_resource type="Script" path="res://first_level_map.gd" id="2_map"]
+[ext_resource type="Script" path="res://first_level_camera.gd" id="3_camera"]
+
+[node name="Node2D" instance=ExtResource("1_main")]
+
+[node name="Player" parent="." index="0"]
+fireball_cd = 0.8
+
+[node name="Camera2D" parent="." index="1"]
+script = ExtResource("3_camera")
+
+[node name="FirstLevelMap" type="Node2D" parent="."]
+script = ExtResource("2_map")
