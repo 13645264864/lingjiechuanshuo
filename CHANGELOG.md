@@ -16,8 +16,9 @@
 
 ### 版本信息
 
-- Android 包名：`com.lingjiechuanshuo.chumowujin`
+- Android 包名：`com.chumowujin.game`
 - APK 名称：`除魔务尽`
 - VersionName：`0.1.2`
 - VersionCode：`3`
+
 

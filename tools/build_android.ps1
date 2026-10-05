@@ -13,7 +13,6 @@ try {
     if ($LASTEXITCODE -ne 0) { throw "Android export failed with exit code $LASTEXITCODE" }
     & (Join-Path $toolchain.android_sdk 'build-tools/35.0.1/apksigner.bat') verify --verbose (Join-Path $projectRoot 'export/除魔务尽-内测版.apk')
     if ($LASTEXITCODE -ne 0) { throw 'APK signature verification failed' }
-    Copy-Item -LiteralPath (Join-Path $projectRoot 'export/除魔务尽-内测版.apk') -Destination (Join-Path $projectRoot 'export/chumowujin-beta.apk')
 } finally {
     Remove-Item Env:GODOT_ANDROID_KEYSTORE_RELEASE_PASSWORD -ErrorAction SilentlyContinue
     Remove-Item Env:GODOT_ANDROID_KEYSTORE_RELEASE_USER -ErrorAction SilentlyContinue
