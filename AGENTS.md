@@ -1,4 +1,4 @@
-# LINGJIECHUANSHUO 项目说明
+# 除魔务尽项目说明
 
 ## 项目与运行环境
 
@@ -24,8 +24,8 @@
 - `main_menu.tscn` / `main_menu.gd`：使用用户提供的 demon slayer.jpg 作为主页面背景，仅有“开始游戏”；进入关卡后直接开始初始技能选择。
 - `touch_joystick.gd`：左侧浮动虚拟摇杆，以当前手指落点为中心，松手隐藏；移动方向与键盘合并，暂停、松手、旋转或切出应用时释放输入。
 - `touch_action_button.gd`：直接接收多点触摸，允许左手移动同时右手闪避或发动剑魂。
-- Android 使用兼容渲染、传感器横竖屏旋转、横屏 1152×648 / 竖屏 648×1152 基准缩放和内置 Noto Sans SC 字体。导出预设为 `Android`，版本 0.1.2（VersionCode 3），包名 `com.lingjiechuanshuo.demonslayer`。
-- 发布 APK 为 `export/灵界传说-内测版.apk`。构建命令 `tools/build_android.ps1`；先用 `tools/prepare_android.py` 准备工具，再运行 `tools/android_signing.py` 和 Godot 编辑器脚本 `tools/configure_android.gd`。
+- Android 使用兼容渲染、传感器横竖屏旋转、横屏 1152×648 / 竖屏 648×1152 基准缩放和内置 Noto Sans SC 字体。导出预设为 `Android`，版本 0.1.2（VersionCode 3），包名 `com.lingjiechuanshuo.chumowujin`。
+- 发布 APK 为 `export/除魔务尽-内测版.apk`。构建命令 `tools/build_android.ps1`；先用 `tools/prepare_android.py` 准备工具，再运行 `tools/android_signing.py` 和 Godot 编辑器脚本 `tools/configure_android.gd`。
 - 发布签名私钥在 `.tmp/android/release.keystore`，凭据在同目录 signing.json；均排除出 Git，后续更新必须保留同一签名身份。
 
 - `first_level.tscn`：当前默认第一关，六个普通战斗房与一个最终 Boss 房，清怪开门，最后拐弯位置有随机变化。
@@ -134,3 +134,4 @@ Boss、刷怪和闪避系统回归测试：
 ```
 
 成功输出 `BOSS_ATTACK_TEST_RESULT ... failures=0`，退出码为 0。
+

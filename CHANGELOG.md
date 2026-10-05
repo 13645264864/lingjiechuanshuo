@@ -1,4 +1,4 @@
-# 灵界传说更新日志
+# 除魔务尽更新日志
 
 ## 0.1.2（内测版）
 
@@ -16,7 +16,8 @@
 
 ### 版本信息
 
-- Android 包名：`com.lingjiechuanshuo.demonslayer`
-- APK 名称：`灵界传说`
+- Android 包名：`com.lingjiechuanshuo.chumowujin`
+- APK 名称：`除魔务尽`
 - VersionName：`0.1.2`
 - VersionCode：`3`
+

@@ -10,7 +10,7 @@ config_version=5
 
 [application]
 
-config/name="灵界传说"
+config/name="除魔务尽"
 run/main_scene="res://main_menu.tscn"
 config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://Sprites/app_icon.png"
@@ -81,3 +81,4 @@ rendering_device/driver.windows="d3d12"
 renderer/rendering_method="mobile"
 renderer/rendering_method.mobile="gl_compatibility"
 textures/vram_compression/import_etc2_astc=true
+
